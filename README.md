@@ -356,19 +356,77 @@ Spring will automatically discover the new provider through dependency injection
 
 The existing `ParkingController` and `ParkingService` do not need to be modified.
 
-## 10. Limitations and Possible Improvements
+## 10. Technical Decisions and Justifications
 
-- **Paris availability:** The current Paris Open Data dataset does not expose real-time available spaces.
-- **Pagination:** The Paris API currently retrieves a limited number of records per request.
-- **External dependencies:** Live requests depend on the availability of third-party APIs.
-- **Caching:** A short-lived cache could reduce repeated external API calls.
-- **Timeouts:** Explicit HTTP connection and response timeouts could improve resilience.
-- **Monitoring:** Additional logging and metrics could help diagnose upstream API failures.
+Several technical choices were made to keep the application simple, maintainable, and extensible.
 
-## 11. Conclusion
+### Java 21 and Spring Boot
 
-This project demonstrates a modular Spring Boot REST API that integrates parking data from different public sources through a common interface.
+Java 21 was selected as a modern LTS version of Java, while Spring Boot 3.2.2 provides a reliable framework for developing REST APIs with dependency injection and external service integration.
 
-The **Strategy design pattern** separates city-specific API integrations from the application’s core logic, making the system easier to maintain, test and extend.
+### Strategy Design Pattern
 
-Both Poitiers and Paris are integrated using real public APIs. Differences in the data they provide are handled transparently through the shared `ParkingDto` model, without inventing unavailable information.
+The Strategy pattern was chosen to separate the integration logic of each city from the core application.
+
+Each city implements the `ParkingProvider` interface, while `ParkingService` selects the appropriate implementation based on the requested city.
+
+This approach avoids conditional logic tied to individual cities and makes the application easier to extend and test.
+
+### Common Data Transfer Object
+
+A shared `ParkingDto` was introduced to provide a consistent API response regardless of the external data source.
+
+Each provider uses a dedicated mapper to translate its specific response format into this common representation.
+
+This keeps the external API structures isolated from the REST controller.
+
+### Choice of Paris Open Data
+
+The Paris Open Data API was selected because it provides a publicly accessible and documented source of parking information.
+
+Although it does not expose real-time availability, the integration demonstrates the application's ability to support heterogeneous data sources without changing its core architecture.
+
+### Handling Missing Data
+
+The Paris Open Data API does not provide real-time parking availability.
+
+Instead of returning an incorrect value, the application sets `availableSpaces` to `null`, clearly indicating that the information is unavailable.
+
+Geographic coordinates are also validated before being returned to avoid exposing invalid locations.
+
+### Testing Strategy
+
+JUnit 5, AssertJ, and Jackson are used to verify data mapping and JSON deserialization.
+
+Saved JSON responses are used as test fixtures to ensure that tests remain reproducible and do not depend on external API availability.
+
+## 11. Professional Considerations and Future Improvements
+
+The implementation focuses on the core requirements while identifying several improvements that would be considered in a production environment.
+
+- **Real-time availability for Paris:** Integrate an additional data provider that exposes live parking occupancy information.
+- **Pagination:** Retrieve all available parking records instead of limiting the response to a single page.
+- **HTTP resilience:** Configure connection and read timeouts, and introduce appropriate retry mechanisms for temporary upstream failures.
+- **Caching:** Cache external API responses for a short period to reduce latency and unnecessary requests.
+- **Observability:** Introduce structured logging, monitoring, and metrics to detect external API failures.
+- **Additional tests:** Add HTTP integration tests and cover more edge cases, including malformed upstream responses.
+- **Configuration management:** Externalize environment-specific settings to simplify deployment across different environments.
+
+These improvements were identified but were not implemented in order to keep the solution focused on the scope of the technical exercise.
+
+## 12. Time Spent on the Assignment
+
+**Approximately 5 hours in total**, broken down as follows:
+
+- **4 hours:** Requirements analysis, architecture design, Poitiers API integration, unit testing, and documentation.
+- **1 hour:** Paris Open Data API integration, reusing the existing architecture based on the Strategy design pattern.
+
+Adding Paris required relatively few modifications thanks to the separation of concerns and the extensible architecture established from the beginning.
+
+## 13. Conclusion
+
+This project demonstrates a modular Spring Boot REST API that integrates parking data from multiple public sources through a unified interface.
+
+The implementation emphasizes separation of concerns, extensibility, input validation, error handling, and testability.
+
+The identified limitations and proposed improvements reflect how the solution could evolve in a production environment.
