@@ -1,7 +1,4 @@
 # API de disponibilité des parkings
-
-[🇬🇧 English](README.md) | 🇫🇷 Français
-
 Une API REST développée avec **Java 21** et **Spring Boot 3.2.2** permettant de récupérer les informations des parkings de différentes villes à travers une interface unifiée.
 
 L’application intègre actuellement deux sources de données publiques :
